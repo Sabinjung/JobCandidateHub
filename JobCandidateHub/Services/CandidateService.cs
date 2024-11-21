@@ -1,4 +1,5 @@
-﻿using JobCandidateHub.DTOs;
+﻿using JobCandidateHub.Constants;
+using JobCandidateHub.DTOs;
 using JobCandidateHub.Models.Entities;
 using JobCandidateHub.Respositories;
 
@@ -7,16 +8,36 @@ namespace JobCandidateHub.Services
     public class CandidateService : ICandidateService
     {
         private readonly ICandidateRepository _candidateRepository;
+        private readonly ICacheService _cacheService;
 
-        public CandidateService(ICandidateRepository candidateRepository)
+        public CandidateService(ICandidateRepository candidateRepository, ICacheService cacheService)
         {
             _candidateRepository = candidateRepository;
+            _cacheService = cacheService;
+        }
+
+        public async Task<Candidate?> GetByEmailAsync(string email)
+        {
+            var cacheKey = CacheKeyConstants.GetCandidateByEmail(email);
+
+            var cachedCandidate = _cacheService.GetFromCache<Candidate>(cacheKey);
+            if (cachedCandidate != null)
+            {
+                return cachedCandidate;
+            }
+
+            var candidate = await _candidateRepository.GetByEmailAsync(email);
+            if (candidate != null)
+            {
+                _cacheService.SetInCache(cacheKey, candidate, TimeSpan.FromMinutes(30));
+            }
+
+            return candidate;
         }
 
         public async Task<(Candidate candidate, bool isUpdateAction)> UpsertCandidateAsync(CandidateDto candidateDto)
         {
-            bool isUpdateAction = false;
-            var existingCandidate = await _candidateRepository.GetByEmailAsync(candidateDto.Email);
+            var existingCandidate = await GetByEmailAsync(candidateDto.Email);
 
             Candidate candidate;
             if (existingCandidate != null)
@@ -32,7 +53,10 @@ namespace JobCandidateHub.Services
                 existingCandidate.UpdatedAt = DateTime.UtcNow;
 
                 candidate = await _candidateRepository.UpdateAsync(existingCandidate);
-                isUpdateAction = true;
+
+                var cacheKey = CacheKeyConstants.GetCandidateByEmail(candidate.Email);
+                _cacheService.RemoveFromCache(cacheKey);
+                _cacheService.SetInCache(cacheKey, candidate);
             }
             else
             {
@@ -50,9 +74,13 @@ namespace JobCandidateHub.Services
                 };
 
                 candidate = await _candidateRepository.CreateAsync(candidate);
+
+                var cacheKey = CacheKeyConstants.GetCandidateByEmail(candidate.Email);
+                _cacheService.SetInCache(cacheKey, candidate, TimeSpan.FromMinutes(30));
             }
 
-            return (candidate, isUpdateAction );
+            return (candidate, existingCandidate != null);
         }
+
     }
 }
