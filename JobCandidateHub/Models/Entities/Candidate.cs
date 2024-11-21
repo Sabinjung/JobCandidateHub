@@ -14,8 +14,8 @@ namespace JobCandidateHub.Models.Entities
         public DateTime? CallStartTime { get; set; }
         public DateTime? CallEndTime { get; set; }
 
-        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     }
 }
