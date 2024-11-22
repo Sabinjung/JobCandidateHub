@@ -1,5 +1,4 @@
 ﻿using JobCandidateHub.DTOs;
-using JobCandidateHub.Models.Entities;
 using JobCandidateHub.Services;
 using Microsoft.AspNetCore.Mvc;
 

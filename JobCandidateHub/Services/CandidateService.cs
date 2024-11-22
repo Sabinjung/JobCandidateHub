@@ -39,47 +39,54 @@ namespace JobCandidateHub.Services
         {
             var existingCandidate = await GetByEmailAsync(candidateDto.Email);
 
-            Candidate candidate;
-            if (existingCandidate != null)
-            {
-                existingCandidate.FirstName = candidateDto.FirstName;
-                existingCandidate.LastName = candidateDto.LastName;
-                existingCandidate.PhoneNumber = candidateDto.PhoneNumber;
-                existingCandidate.LinkedInUrl = candidateDto.LinkedInUrl;
-                existingCandidate.GitHubUrl = candidateDto.GitHubUrl;
-                existingCandidate.Comment = candidateDto.Comment;
-                existingCandidate.CallStartTime = candidateDto.CallStartTime;
-                existingCandidate.CallEndTime = candidateDto.CallEndTime;
-                existingCandidate.UpdatedAt = DateTime.UtcNow;
-
-                candidate = await _candidateRepository.UpdateAsync(existingCandidate);
-
-                var cacheKey = CacheKeyConstants.GetCandidateByEmail(candidate.Email);
-                _cacheService.RemoveFromCache(cacheKey);
-                _cacheService.SetInCache(cacheKey, candidate);
-            }
-            else
-            {
-                candidate = new Candidate
-                {
-                    Email = candidateDto.Email,
-                    FirstName = candidateDto.FirstName,
-                    LastName = candidateDto.LastName,
-                    PhoneNumber = candidateDto.PhoneNumber,
-                    LinkedInUrl = candidateDto.LinkedInUrl,
-                    GitHubUrl = candidateDto.GitHubUrl,
-                    Comment = candidateDto.Comment,
-                    CallStartTime = candidateDto.CallStartTime,
-                    CallEndTime = candidateDto.CallEndTime,
-                };
-
-                candidate = await _candidateRepository.CreateAsync(candidate);
-
-                var cacheKey = CacheKeyConstants.GetCandidateByEmail(candidate.Email);
-                _cacheService.SetInCache(cacheKey, candidate, TimeSpan.FromMinutes(30));
-            }
+            var candidate = (existingCandidate != null) ? 
+                await UpdateCandidate(existingCandidate, candidateDto) 
+                : await CreateCandiate(candidateDto);
 
             return (candidate, existingCandidate != null);
+        }
+
+        private async Task<Candidate> UpdateCandidate(Candidate existingCandidate, CandidateDto candidateDto)
+        {
+            existingCandidate.FirstName = candidateDto.FirstName;
+            existingCandidate.LastName = candidateDto.LastName;
+            existingCandidate.PhoneNumber = candidateDto.PhoneNumber;
+            existingCandidate.LinkedInUrl = candidateDto.LinkedInUrl;
+            existingCandidate.GitHubUrl = candidateDto.GitHubUrl;
+            existingCandidate.Comment = candidateDto.Comment;
+            existingCandidate.CallStartTime = candidateDto.CallStartTime;
+            existingCandidate.CallEndTime = candidateDto.CallEndTime;
+            existingCandidate.UpdatedAt = DateTime.UtcNow;
+
+            var candidate = await _candidateRepository.UpdateAsync(existingCandidate);
+
+            var cacheKey = CacheKeyConstants.GetCandidateByEmail(candidate.Email);
+            _cacheService.RemoveFromCache(cacheKey);
+            _cacheService.SetInCache(cacheKey, candidate);
+
+            return candidate;
+        }
+
+        private async Task<Candidate> CreateCandiate(CandidateDto candidateDto)
+        {
+            var candidate = new Candidate
+            {
+                Email = candidateDto.Email,
+                FirstName = candidateDto.FirstName,
+                LastName = candidateDto.LastName,
+                PhoneNumber = candidateDto.PhoneNumber,
+                LinkedInUrl = candidateDto.LinkedInUrl,
+                GitHubUrl = candidateDto.GitHubUrl,
+                Comment = candidateDto.Comment,
+                CallStartTime = candidateDto.CallStartTime,
+                CallEndTime = candidateDto.CallEndTime,
+            };
+
+            candidate = await _candidateRepository.CreateAsync(candidate);
+
+            var cacheKey = CacheKeyConstants.GetCandidateByEmail(candidate.Email);
+            _cacheService.SetInCache(cacheKey, candidate, TimeSpan.FromMinutes(30));
+            return candidate;
         }
 
     }
