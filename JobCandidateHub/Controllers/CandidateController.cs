@@ -1,4 +1,5 @@
-﻿using JobCandidateHub.DTOs;
+﻿using FluentValidation;
+using JobCandidateHub.DTOs;
 using JobCandidateHub.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,17 +10,25 @@ namespace JobCandidateHub.Controllers
     public class CandidateController : ControllerBase
     {
         private readonly ICandidateService _candidateService;
-        public CandidateController(ICandidateService candidateService)
+        private readonly IValidator<CandidateDto> _validator;
+        public CandidateController(ICandidateService candidateService, IValidator<CandidateDto> validator)
         {
             _candidateService = candidateService;
+            _validator = validator;
         }
 
         [HttpPost("upsert")]
         public async Task<IActionResult> UpsertCandidate([FromBody] CandidateDto candidateDto)
         {
-            if (candidateDto == null)
+            var validationResult = await _validator.ValidateAsync(candidateDto);
+
+            if (!validationResult.IsValid)
             {
-                return BadRequest("Candidate data is null");
+                return BadRequest(validationResult.Errors.Select(x => new
+                {
+                    Field = x.PropertyName,
+                    Error = x.ErrorMessage
+                }));
             }
 
             try

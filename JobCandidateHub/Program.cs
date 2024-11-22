@@ -1,7 +1,9 @@
 using System.IO.Compression;
+using FluentValidation;
 using JobCandidateHub.Data;
 using JobCandidateHub.Respositories;
 using JobCandidateHub.Services;
+using JobCandidateHub.Validators;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,6 +44,8 @@ builder.Services.AddSingleton<ICacheService, CacheService>();
 
 builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
 builder.Services.AddScoped<ICandidateService, CandidateService>();
+
+builder.Services.AddValidatorsFromAssemblyContaining<CandidateUpsertValidator>();
 
 var app = builder.Build();
 
