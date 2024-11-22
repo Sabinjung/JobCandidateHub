@@ -20,6 +20,11 @@ namespace JobCandidateHub.Controllers
         [HttpPost("upsert")]
         public async Task<IActionResult> UpsertCandidate([FromBody] CandidateDto candidateDto)
         {
+            if (candidateDto == null)
+            {
+                return BadRequest("Candidate data is null");
+            }
+
             var validationResult = await _validator.ValidateAsync(candidateDto);
 
             if (!validationResult.IsValid)

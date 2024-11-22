@@ -38,12 +38,18 @@ namespace JobCandidateHub.Services
         public async Task<(Candidate candidate, bool isUpdateAction)> UpsertCandidateAsync(CandidateDto candidateDto)
         {
             var existingCandidate = await GetByEmailAsync(candidateDto.Email);
+            Candidate candidate;
 
-            var candidate = (existingCandidate != null) ? 
-                await UpdateCandidate(existingCandidate, candidateDto) 
-                : await CreateCandiate(candidateDto);
-
-            return (candidate, existingCandidate != null);
+            if (existingCandidate != null)
+            {
+                candidate = await UpdateCandidate(existingCandidate, candidateDto);
+                return (candidate, true); 
+            }
+            else
+            {
+                candidate = await CreateCandiate(candidateDto);
+                return (candidate, false);
+            }
         }
 
         private async Task<Candidate> UpdateCandidate(Candidate existingCandidate, CandidateDto candidateDto)
