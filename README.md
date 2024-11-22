@@ -7,4 +7,6 @@ What I have used:
 List of Improvements:
 1. Implemented memory caching for enhanced scalability; however, we can further improve by integrating a distributed caching system like Redis.
 2. To prepare for future codebase growth, we can adopt Clean Architecture by separating projects into distinct layers, such as Infrastructure and Core.
+
+Total Time Spent: 8hrs
    
